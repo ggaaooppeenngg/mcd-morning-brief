@@ -148,7 +148,7 @@ def coupons(
     assert client is not None
     try:
         data = asyncio.run(client.call_many([("available-coupons", None)]))
-        available = extract_coupons(data[("available-coupons", {})])
+        available = extract_coupons(data.get("available-coupons"))
     except McdMcpError as exc:
         _fail(exc)
         return
@@ -185,8 +185,8 @@ def points(demo: bool = typer.Option(False, "--demo", help="离线演示模式")
         assert client is not None
         try:
             data = asyncio.run(client.call_many([("now-time-info", None), ("query-my-account", None)]))
-            payload = {"now-time-info": data[("now-time-info", {})],
-                       "query-my-account": data[("query-my-account", {})]}
+            payload = {"now-time-info": data.get("now-time-info"),
+                       "query-my-account": data.get("query-my-account")}
             brief_obj = brief_from_raw(payload)
         except McdMcpError as exc:
             _fail(exc)

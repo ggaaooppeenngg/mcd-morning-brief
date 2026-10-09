@@ -1,12 +1,18 @@
 """Typed models for the morning brief + tolerant extraction from MCP payloads.
 
-The MCP tools' exact response schemas are not publicly documented, so every
-extractor probes a list of candidate keys (case-insensitive, one nesting level
-deep). Unknown shapes degrade to "empty section + recorded error", never a crash.
+The mcp.mcd.cn tools return LLM-oriented content rather than bare JSON: some
+tools embed the original JSON after a "## Original Response" heading
+(now-time-info / query-my-account / query-lottery-info), others return pure
+Markdown (campaign-calendar / available-coupons / query-my-coupons). Every
+extractor therefore (1) tries to pull an embedded JSON object out of a string
+payload, (2) falls back to Markdown section parsing, and (3) probes a list of
+candidate keys / line patterns. Unknown shapes degrade to "empty section +
+recorded error", never a crash.
 """
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
@@ -58,6 +64,7 @@ class LotteryInfo:
     name: str | None = None
     active: bool = False
     free_draws: int | None = None
+    cost: str | None = None
     raw: Json = None
 
 
@@ -182,7 +189,103 @@ def _parse_date(value: Any) -> date | None:
 
 # ------------------------------------------------------------- section builders
 
+_ORIGINAL_RESPONSE_MARKERS = ("## Original Response", "Original Response", "原始响应")
+
+
+def normalize_payload(payload: Json) -> Json:
+    """String payloads: pull out the embedded JSON object when one exists."""
+    if not isinstance(payload, str):
+        return payload
+    chunks: list[str] = []
+    for marker in _ORIGINAL_RESPONSE_MARKERS:
+        if marker in payload:
+            chunks.append(payload.split(marker, 1)[1])
+    chunks.extend(re.findall(r"```(?:json)?\s*(\{.*?\})\s*```", payload, re.S))
+    chunks.append(payload)
+    for chunk in chunks:
+        blob = _balanced_json(chunk)
+        if blob is not None:
+            try:
+                return json.loads(blob)
+            except json.JSONDecodeError:
+                continue
+    return payload
+
+
+def _balanced_json(text: str) -> str | None:
+    start = text.find("{")
+    if start < 0:
+        return None
+    depth, in_str, esc = 0, False, False
+    for i in range(start, len(text)):
+        ch = text[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+        elif ch == '"':
+            in_str = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : i + 1]
+    return None
+
+
+_CAM_HEADER = re.compile(r"#{3,4}\s*(\d{4})年(\d{1,2})月(\d{1,2})日[ \t]*([^\n#]*)")
+_CAM_TITLE = re.compile(r"\*\*活动标题\*\*[：:]\s*([^\\\n]+)")
+_CPN_TITLE = re.compile(r"优惠券标题[：:]\s*([^\\\n]+)")
+_CPN_BENEFIT = re.compile(r"优惠(?:内容|说明|力度|信息)[：:]\s*([^\\\n]+)")
+_CPN_VALID = re.compile(r"有效期[^：:\n\d]*[：:]?\s*(\d{4}[-./年]\d{1,2}[-./月]\d{1,2}[日]?|\d{1,2}[-./]\d{1,2})")
+
+
+def _campaigns_from_markdown(text: str) -> list[Campaign]:
+    headers = list(_CAM_HEADER.finditer(text))
+    out: list[Campaign] = []
+    cursor = 0
+    for tm in _CAM_TITLE.finditer(text):
+        owner = None  # nearest date heading before this title line
+        while cursor < len(headers) and headers[cursor].start() < tm.start():
+            owner = headers[cursor]
+            cursor += 1
+        if owner is None:
+            continue
+        year, month, day = int(owner[1]), int(owner[2]), int(owner[3])
+        label = (owner[4] or "").strip()
+        if "往期" in label or "已结束" in label:
+            continue
+        out.append(Campaign(
+            title=tm[1].strip(), start=date(year, month, day), end=None,
+            raw={"section": label},
+        ))
+    return out
+
+
+def _coupons_from_markdown(text: str) -> list[Coupon]:
+    titles = list(_CPN_TITLE.finditer(text))
+    out: list[Coupon] = []
+    for i, m in enumerate(titles):
+        segment = text[m.end() : titles[i + 1].start() if i + 1 < len(titles) else len(text)]
+        benefit = _CPN_BENEFIT.search(segment)
+        valid = _CPN_VALID.search(segment)
+        out.append(Coupon(
+            name=m[1].strip(),
+            benefit=benefit[1].strip() if benefit else None,
+            valid_until=_parse_date(valid[1]) if valid else None,
+            raw={"segment": segment[:300]},
+        ))
+    return out
+
+
 def extract_campaigns(payload: Json) -> list[Campaign]:
+    payload = normalize_payload(payload)
+    if isinstance(payload, str):
+        return _campaigns_from_markdown(payload)
     items = find_list(payload, "activities", "campaigns", "calendarList", "list", "data", "records")
     out = []
     for item in items:
@@ -199,6 +302,9 @@ def extract_campaigns(payload: Json) -> list[Campaign]:
 
 
 def extract_coupons(payload: Json) -> list[Coupon]:
+    payload = normalize_payload(payload)
+    if isinstance(payload, str):
+        return _coupons_from_markdown(payload)
     items = find_list(payload, "coupons", "couponList", "list", "data", "records", "result")
     out = []
     for item in items:
@@ -214,32 +320,68 @@ def extract_coupons(payload: Json) -> list[Coupon]:
     return out
 
 
-def extract_points(payload: Json) -> PointsInfo | None:
+def _month_end(today: date, plus_months: int) -> date:
+    total = today.month - 1 + plus_months
+    year, month = today.year + total // 12, total % 12 + 1
+    if month == 12:
+        return date(year, 12, 31)
+    return date(year, month + 1, 1) - timedelta(days=1)
+
+
+def extract_points(payload: Json, today: date | None = None) -> PointsInfo | None:
+    payload = normalize_payload(payload)
     if not isinstance(payload, dict):
         return None
+    expiring = _int(payload, "currentMouthExpirePoint", "currentMonthExpirePoint",
+                    "expiringPoints", "soonExpirePoints", "aboutToExpirePoints", "willExpirePoints")
+    expiring_next = _int(payload, "nextMouthExpirePoint", "nextMonthExpirePoint")
+    expiring_date = None
+    if today is not None:
+        if expiring:
+            expiring_date = _month_end(today, 0)
+        elif expiring_next:
+            expiring_date = _month_end(today, 1)
     info = PointsInfo(
-        available=_int(payload, "availablePoints", "usablePoints", "canUsePoints", "points", "available"),
-        total=_int(payload, "totalPoints", "cumulativePoints", "total"),
-        frozen=_int(payload, "frozenPoints", "freezePoints", "frozen"),
-        expiring=_int(payload, "expiringPoints", "soonExpirePoints", "aboutToExpirePoints", "willExpirePoints"),
-        expiring_date=_date(payload, "expiringDate", "expireDate", "latestExpireTime", "soonExpireTime"),
+        available=_int(payload, "availablePoint", "availablePoints", "usablePoints", "canUsePoints", "points"),
+        total=_int(payload, "accumulativePoint", "totalPoints", "cumulativePoints", "total"),
+        frozen=_int(payload, "frozenPoint", "frozenPoints", "freezePoints", "frozen"),
+        expiring=expiring if expiring else expiring_next,
+        expiring_date=expiring_date,
         raw=payload,
     )
     return info if any(v is not None for k, v in vars(info).items() if k != "raw") else None
 
 
+_ACTIVE_LABELS = ("进行中", "ongoing")
+
+
 def extract_lottery(payload: Json) -> LotteryInfo | None:
+    payload = normalize_payload(payload)
     if not isinstance(payload, dict):
         return None
-    status = _text(payload, "activityStatus", "status", "state")
-    active = status in ("ONGOING", "GOING", "ACTIVITY_ONGOING", "进行中", "1") or _lookup(payload, "ongoing") is True
-    free = _int(payload, "freeDrawTimes", "freeTimes", "remainFreeTimes", "userFreeTimes", "leftFreeTimes")
-    if status is None and free is None and _text(payload, "activityName", "name", "title") is None:
+    status_text = _text(payload, "activityStatusText")
+    status = _lookup(payload, "status")
+    if isinstance(status, dict):  # e.g. {"code": "SUCCESS", "message": ...}
+        status = _text(status, "code")
+    active = (status_text in _ACTIVE_LABELS
+              or (status_text is None and (status in _ACTIVE_LABELS or status in ("ONGOING", "GOING", "1"))))
+    name = _text(payload, "activityName", "name", "title")
+    free = _int(payload, "availableTimes", "freeDrawTimes", "freeTimes", "remainFreeTimes", "userFreeTimes")
+    draw_type = _text(payload, "drawTypeText")
+    draw_point = _int(payload, "drawPoint")
+    if status_text is None and status is None and free is None and name is None:
         return None
+    if draw_type == "无":
+        cost = None
+    elif draw_point and draw_type and "积分" in draw_type:
+        cost = f"{draw_point} 积分/次"
+    else:
+        cost = draw_type
     return LotteryInfo(
-        name=_text(payload, "activityName", "name", "title"),
+        name=name,
         active=active,
         free_draws=free,
+        cost=cost,
         raw=payload,
     )
 

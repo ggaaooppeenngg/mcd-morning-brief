@@ -205,7 +205,7 @@ crontab / CI 定时 ────┼──> mcd-brief（Skill 剧本 或 Python C
 
 ```bash
 pip install -r requirements-dev.txt
-pytest          # 16 个离线用例：聚合、窗口过滤、过期计算、容错解析、4 种渲染
+pytest          # 22 个离线用例：聚合、窗口过滤、过期计算、容错解析、4 种渲染、真实格式回归
 ```
 
 真实链路验证：`export MCD_MCP_TOKEN=... && python -m mcd_brief brief`

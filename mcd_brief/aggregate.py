@@ -16,6 +16,7 @@ from .models import (
     extract_coupons,
     extract_lottery,
     extract_points,
+    normalize_payload,
     tool_error,
 )
 
@@ -32,7 +33,7 @@ BRIEF_TOOLS: list[tuple[str, dict[str, Any] | None]] = [
 async def build_brief(client: McdClient, *, window_days: int = 7, today: date | None = None) -> Brief:
     """Call every tool the brief needs over one session, then assemble."""
     data = await client.call_many(BRIEF_TOOLS)
-    raw = {tool: data[(tool, args or {})] for tool, args in BRIEF_TOOLS}
+    raw = {tool: data.get(tool) for tool, _args in BRIEF_TOOLS}
     return brief_from_raw(raw, window_days=window_days, today=today)
 
 
@@ -47,25 +48,56 @@ def brief_from_raw(
         if err:
             brief.errors.append(f"{tool}: {err}")
 
-    brief.campaigns = extract_campaigns(raw.get("campaign-calendar"))
-    brief.claimable = extract_coupons(raw.get("available-coupons"))
-    brief.my_coupons = extract_coupons(raw.get("query-my-coupons"))
-    brief.points = extract_points(raw.get("query-my-account"))
+    brief.campaigns = _dedup_campaigns(extract_campaigns(raw.get("campaign-calendar")))
+    brief.claimable = _dedup_coupons(extract_coupons(raw.get("available-coupons")))
+    brief.my_coupons = _dedup_coupons(extract_coupons(raw.get("query-my-coupons")))
+    brief.points = extract_points(raw.get("query-my-account"), today=today)
     brief.lottery = extract_lottery(raw.get("query-lottery-info"))
     brief.window_days = window_days
     return brief
 
 
-def _today_from(payload: Any) -> date | None:
-    if isinstance(payload, dict):
-        for key in ("date", "today", "currentDate", "time", "now", "datetime"):
-            value = payload.get(key)
-            if isinstance(value, str) and len(value) >= 10:
-                from .models import _parse_date
+def _dedup_campaigns(items: list[Campaign]) -> list[Campaign]:
+    """The calendar lists multi-day campaigns under every date they run; keep the earliest."""
+    seen: set[str] = set()
+    out = []
+    for c in items:  # server lists dates in ascending order
+        if c.title in seen:
+            continue
+        seen.add(c.title)
+        out.append(c)
+    return out
 
-                parsed = _parse_date(value[:10])
-                if parsed:
-                    return parsed
+
+def _dedup_coupons(items: list[Coupon]) -> list[Coupon]:
+    """Merge repeated listings of the same coupon (different channels) with a ×N suffix."""
+    counts: dict[tuple[str, str | None], int] = {}
+    order: list[Coupon] = []
+    for c in items:
+        key = (c.name, c.benefit)
+        counts[key] = counts.get(key, 0) + 1
+        if counts[key] == 1:
+            order.append(c)
+    for c in order:
+        n = counts[(c.name, c.benefit)]
+        if n > 1:
+            c.name = f"{c.name} ×{n}"
+    return order
+
+
+def _today_from(payload: Any) -> date | None:
+    payload = normalize_payload(payload)
+    if isinstance(payload, dict):
+        inner = payload.get("data")
+        for candidate in (payload, inner if isinstance(inner, dict) else {}):
+            for key in ("date", "today", "currentDate", "datetime", "formatted"):
+                value = candidate.get(key)
+                if isinstance(value, str) and len(value) >= 10:
+                    from .models import _parse_date
+
+                    parsed = _parse_date(value[:10])
+                    if parsed:
+                        return parsed
     return None
 
 
@@ -98,6 +130,8 @@ def lottery_line(brief: Brief) -> str | None:
     name = lot.name or "积分抽奖活动"
     if lot.free_draws:
         return f"🎁 「{name}」进行中，你还有 {lot.free_draws} 次免费抽奖机会"
+    if lot.cost:
+        return f"🎁 「{name}」进行中（{lot.cost}）"
     return f"🎁 「{name}」进行中"
 
 

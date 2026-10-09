@@ -1,84 +1,9 @@
 {
-  "_comment": "内置演示数据（--demo 模式）。字段结构为模拟的麦当劳 MCP 工具返回，仅用于离线体验输出效果，不代表真实接口结构。",
-  "now-time-info": {
-    "date": "2026-10-10",
-    "week": 6,
-    "time": "08:00:00"
-  },
-  "campaign-calendar": {
-    "month": "2026-10",
-    "activities": [
-      {
-        "title": "10.10 麦乐畅享日 · 多款套餐第二份半价",
-        "startDate": "2026-10-10",
-        "endDate": "2026-10-10"
-      },
-      {
-        "title": "国际拉花咖啡周 · M咖啡买一送一",
-        "startDate": "2026-10-11",
-        "endDate": "2026-10-17"
-      },
-      {
-        "title": "会员日 · 麦金卡会员双倍积分",
-        "startDate": "2026-10-13",
-        "endDate": "2026-10-13"
-      },
-      {
-        "title": "万圣节怪怪堡上新",
-        "startDate": "2026-10-25",
-        "endDate": "2026-11-07"
-      },
-      {
-        "title": "国庆黄金周 · 桶半价",
-        "startDate": "2026-10-01",
-        "endDate": "2026-10-08"
-      }
-    ]
-  },
-  "available-coupons": {
-    "coupons": [
-      {
-        "couponName": "早晨加油包",
-        "benefit": "早晨套餐立省 6 元",
-        "validEndDate": "2026-10-31"
-      },
-      {
-        "couponName": "板烧鸡腿堡买一送一",
-        "benefit": "每日 10:30 后可用",
-        "validEndDate": "2026-10-12"
-      },
-      {
-        "couponName": "麦乐送满 49 减 12",
-        "benefit": "外送专用",
-        "validEndDate": "2026-10-18"
-      }
-    ]
-  },
-  "query-my-coupons": {
-    "coupons": [
-      {
-        "couponName": "派 Day 派对券 · 香芋派免费券",
-        "benefit": "凭券免费兑换香芋派一个",
-        "validEndDate": "2026-10-11"
-      },
-      {
-        "couponName": "麦旋风 5 元券",
-        "benefit": "麦旋风任意口味立减 5 元",
-        "validEndDate": "2026-10-20"
-      }
-    ]
-  },
-  "query-my-account": {
-    "availablePoints": 1240,
-    "totalPoints": 3580,
-    "frozenPoints": 0,
-    "expiringPoints": 300,
-    "expiringDate": "2026-10-15"
-  },
-  "query-lottery-info": {
-    "activityName": "十月麦麦抽奖季",
-    "activityStatus": "ONGOING",
-    "freeDrawTimes": 1,
-    "prizes": ["巨无霸中券", "麦乐鸡 5 块券", "积分翻倍卡"]
-  }
+  "_comment": "内置演示数据（--demo 模式）。内容为模拟数据，但结构与 mcp.mcd.cn 真实返回一致（Markdown + 内嵌 JSON），用于离线体验与回归测试。",
+  "now-time-info": "# API Response Information\n\n## Response Structure\n\n- **data**: 服务器时间信息\n\n## Original Response\n\n{\"success\":true,\"code\":200,\"message\":\"请求成功\",\"datetime\":\"2026-10-10 08:00:00\",\"data\":{\"timestamp\":1791619200000,\"datetime\":\"2026-10-10T08:00:00.000\",\"formatted\":\"2026-10-10 08:00:00\",\"date\":\"2026-10-10\",\"year\":2026,\"month\":10,\"day\":10,\"dayOfWeek\":\"SATURDAY\",\"timezone\":\"GMT+08:00\",\"offset\":\"+08:00\"}}",
+  "campaign-calendar": "### 当前时间：2026-10-10 08:00:00\n\n### 活动列表：\n\n#### 2026年10月1日 往期回顾\n\n-   **活动标题**：国庆黄金周 · 桶半价\n    **活动内容介绍**：10月1日至10月8日\n\n#### 2026年10月10日 今日\n\n-   **活动标题**：10.10 麦乐畅享日 · 多款套餐第二份半价\n    **活动内容介绍**：仅限今天， 部分套餐第二份半价\n\n#### 2026年10月11日\n\n-   **活动标题**：国际拉花咖啡周 · M咖啡买一送一\n    **活动内容介绍**：10月11日至10月17日\n\n#### 2026年10月13日\n\n-   **活动标题**：会员日 · 麦金卡会员双倍积分\n    **活动内容介绍**：仅限会员日当天\n\n#### 2026年10月25日\n\n-   **活动标题**：万圣节怪怪堡上新\n    **活动内容介绍**：10月25日起限量上市",
+  "available-coupons": "### 麦麦省优惠券列表：\n- 优惠券标题：早晨加油包 \\\n  状态：可领取 \\\n  优惠内容：早晨套餐立省 6 元 \\\n  有效期至：2026-10-31\n- 优惠券标题：板烧鸡腿堡买一送一 \\\n  状态：可领取 \\\n  优惠内容：每日 10:30 后可用 \\\n  有效期至：2026-10-12\n- 优惠券标题：麦乐送满 49 减 12 \\\n  状态：可领取 \\\n  优惠内容：外送专用 \\\n  有效期至：2026-10-18",
+  "query-my-coupons": "# 您的优惠券列表\n\n- 优惠券标题：派 Day 派对券 · 香芋派免费券 \\\n  优惠内容：凭券免费兑换香芋派一个 \\\n  有效期至：2026-10-11\n- 优惠券标题：麦旋风 5 元券 \\\n  优惠内容：麦旋风任意口味立减 5 元 \\\n  有效期至：2026-10-20",
+  "query-my-account": "# API Response Information\n\n## Response Structure\n\n- **data**: 积分账户信息\n\n## Original Response\n\n{\"success\":true,\"code\":200,\"message\":\"请求成功\",\"datetime\":\"2026-10-10 08:00:00\",\"data\":{\"availablePoint\":\"1240\",\"accumulativePoint\":\"3580\",\"currentMouthExpirePoint\":\"300\",\"nextMouthExpirePoint\":\"0\",\"frozenPoint\":\"0\"}}",
+  "query-lottery-info": "# API Response Information\n\n## Response Structure\n\n- **data**: 积分抽奖活动信息\n\n## Original Response\n\n{\"success\":true,\"code\":200,\"data\":{\"activityCode\":\"LOTTO-10\",\"activityName\":\"十月麦麦抽奖季\",\"activityStatusText\":\"进行中\",\"beginTime\":\"2026-10-01\",\"endTime\":\"2026-10-31\",\"drawPoint\":\"0\",\"drawTypeText\":\"无\",\"availableTimes\":1}}"
 }

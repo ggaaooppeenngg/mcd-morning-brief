@@ -143,26 +143,25 @@ class McdClient:
 
     async def call(self, tool: str, args: dict[str, Any] | None = None) -> Any:
         """Call one tool in a fresh session."""
-        key = (tool, args or {})
-        return (await self.call_many([key]))[key]
+        return (await self.call_many([(tool, args)]))[tool]
 
     async def call_many(
         self, calls: list[tuple[str, dict[str, Any] | None]]
-    ) -> dict[tuple[str, dict[str, Any]], Any]:
+    ) -> dict[str, Any]:
         """Call several tools over a single session (fewer handshakes, friendlier to rate limits).
 
         Per-tool errors are returned as ``{"__error__": "..."}`` instead of aborting the batch.
+        Duplicate tool names: the last call wins.
         """
-        results: dict[tuple[str, dict[str, Any]], Any] = {}
+        results: dict[str, Any] = {}
         try:
             async with asyncio.timeout(self.timeout * max(len(calls), 1)):
                 async with _open_session(self.url, self.token, self.timeout) as session:
                     for tool, args in calls:
-                        key = (tool, args or {})
                         try:
-                            results[key] = await self._call(session, tool, key[1])
+                            results[tool] = await self._call(session, tool, args or {})
                         except McdMcpError as exc:
-                            results[key] = {"__error__": str(exc)}
+                            results[tool] = {"__error__": str(exc)}
             return results
         except McdMcpError:
             raise

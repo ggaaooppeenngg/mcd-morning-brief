@@ -61,7 +61,7 @@ sequenceDiagram
 - CLI 路径：`mcd_brief/aggregate.py::build_brief` 通过 `client.py::McdClient.call_many`
   在**同一次 MCP 会话**中顺序调用 6 个只读工具（一次握手，降低延迟与限流风险）；
 - 任意一个工具失败不影响整份晨报：失败栏目记入 `errors`，渲染为"数据源告警"段落；
-- MCP 响应结构未公开文档化，解析层（`models.py`）对多候选键名做容错匹配，未知结构降级为空栏目而不是崩溃。
+- MCP 响应为面向 LLM 的内容而非裸 JSON（实测）：`now-time-info`/`query-my-account`/`query-lottery-info` 在 "## Original Response" 后内嵌原始 JSON；`campaign-calendar`/`available-coupons`/`query-my-coupons` 返回 Markdown。解析层（`models.py`）先用平衡括号提取内嵌 JSON，再回退到 Markdown 分节/分块解析，并按多候选键名容错匹配；未知结构降级为空栏目而不是崩溃。
 
 ### 3.2 领券（写操作，确认后执行）
 
