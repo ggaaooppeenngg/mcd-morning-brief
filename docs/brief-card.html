@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: transparent; font-family: "Cascadia Code", "JetBrains Mono", Consolas, "Microsoft YaHei Mono", monospace; }
+  .term {
+    width: 980px; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,.45), 0 4px 16px rgba(0,0,0,.25);
+    border: 1px solid #3a3a42;
+  }
+  .bar {
+    height: 44px; background: #2b2b31; display: flex; align-items: center;
+    padding: 0 16px; gap: 8px;
+  }
+  .dot { width: 13px; height: 13px; border-radius: 50%; }
+  .r { background: #ff5f57; } .y { background: #febc2e; } .g { background: #28c840; }
+  .title { flex: 1; text-align: center; color: #9d9da8; font-size: 14px; margin-right: 60px; }
+  .body {
+    background: #1b1b20; padding: 26px 30px 30px; color: #d6d6dd;
+    font-size: 16.5px; line-height: 1.62; white-space: pre-wrap;
+  }
+  .prompt { color: #28c840; font-weight: 600; }
+  .cmd { color: #e8e8ee; }
+  .h1 { color: #ffffff; font-weight: 700; font-size: 19px; }
+  .h2 { color: #7ab8ff; font-weight: 700; margin-top: 18px; }
+  .hot { color: #ff8f66; font-weight: 700; }
+  .soon { color: #ffd166; font-weight: 700; }
+  .bold { color: #ffffff; font-weight: 700; }
+  .warn { color: #ff7b72; }
+  .gift { color: #56d364; }
+  .dim { color: #8b8b96; }
+  .quote { color: #8b8b96; border-left: 3px solid #3a3a42; padding-left: 12px; margin-top: 16px; display: block; }
+</style>
+</head>
+<body>
+<div class="term">
+  <div class="bar">
+    <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="title">mcd-brief — 麦麦晨报 · python -m mcd_brief brief --demo</span>
+  </div>
+  <div class="body"><span class="prompt">❯ </span><span class="cmd">python -m mcd_brief brief --demo</span>
+
+<span class="h1">## 🌅 麦麦晨报 · 2026-10-10 周六</span>
+
+<span class="h2">### 📅 近期活动（未来 7 天）</span>
+- <span class="hot">🔥 **进行中**</span> 10.10 麦乐畅享日 · 多款套餐第二份半价（10.10 起）
+- <span class="soon">⏰ **1 天后开始**</span> 国际拉花咖啡周 · M咖啡买一送一（10.11 起）
+- <span class="soon">⏰ **3 天后开始**</span> 会员日 · 麦金卡会员双倍积分（10.13 起）
+
+<span class="h2">### 🎫 今日可领优惠券（3 张）</span>
+- 🎟️ <span class="bold">早晨加油包</span>｜早晨套餐立省 6 元｜有效期至 10-31
+- 🎟️ <span class="bold">板烧鸡腿堡买一送一</span>｜每日 10:30 后可用｜有效期至 10-12
+- 🎟️ <span class="bold">麦乐送满 49 减 12</span>｜外送专用｜有效期至 10-18
+<span class="dim">&gt; 💡 回复「领券」或运行 `mcd-brief coupons --claim` 可一键领取</span>
+
+<span class="h2">### ⌛ 即将过期的券（1 张）</span>
+- 🎟️ <span class="bold">派 Day 派对券 · 香芋派免费券</span>｜有效期至 10-11
+
+<span class="h2">### 💰 积分</span>
+- 可用 <span class="bold">1,240</span> 分｜累计 3,580 分
+- <span class="warn">⚠️ 300 积分即将过期（2026-10-31 前），别浪费啦</span>
+
+<span class="h2">### 🎰 抽奖机会</span>
+- <span class="gift">🎁 「十月麦麦抽奖季」进行中，你还有 1 次免费抽奖机会</span>
+
+<span class="quote">---
+&gt; 数据来自麦当劳 MCP Server，仅供参考；餐品、价格与活动以麦当劳 APP / 门店实时信息为准。</span></div>
+</div>
+</body>
+</html>

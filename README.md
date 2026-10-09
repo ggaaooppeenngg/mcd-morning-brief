@@ -12,6 +12,10 @@
 
 ---
 
+<p align="center">
+  <img src="docs/brief-demo.png" alt="麦麦晨报 · 终端输出预览" width="820" />
+</p>
+
 ## 这是什么？
 
 麦当劳的优惠信息散落在 APP 首页、开屏弹窗、麦麦省、会员日历七八个入口里——
