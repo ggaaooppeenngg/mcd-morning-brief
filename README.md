@@ -98,8 +98,15 @@
 | Cherry Studio | 设置 → MCP → 从 JSON 导入 |
 | Claude Code | `claude mcp add` 或 `.mcp.json` |
 
-然后把本仓库 [`skill/SKILL.md`](./skill/SKILL.md) 作为技能/规则安装给客户端
-（Cursor/Trae 用户直接把内容粘进 Rules 也可以）。
+然后把本仓库 [`skill/mcd-morning-brief/`](./skill/mcd-morning-brief/) 作为技能安装给客户端——
+目录已符合 Agent Skill 规范（`SKILL.md` + `references/` + `scripts/`），拷进去即可用：
+
+```bash
+# ZCode / Claude Code 等支持技能目录的客户端：
+cp -r skill/mcd-morning-brief ~/.agents/skills/    # 用户级，所有项目可用
+```
+
+Cursor/Trae 用户也可以直接把 SKILL.md 内容粘进 Rules。
 之后在晨报提示词里加一句 **"附上麦麦晨报栏目"**，或直接问：
 
 ```text
@@ -198,7 +205,7 @@ crontab / CI 定时 ────┼──> mcd-brief（Skill 剧本 或 Python C
 - 聚合与容错解析：[`mcd_brief/aggregate.py`](./mcd_brief/aggregate.py)、[`mcd_brief/models.py`](./mcd_brief/models.py)
 - 渲染器（md/text/json/ics）：[`mcd_brief/render.py`](./mcd_brief/render.py)
 - MCP 客户端（官方 SDK + 双版本兼容 + 401/429 精确诊断）：[`mcd_brief/client.py`](./mcd_brief/client.py)
-- Agent 剧本（工具编排 + 模板 + 后续意图 + 安全守则）：[`skill/SKILL.md`](./skill/SKILL.md)
+- Agent 剧本（工具编排 + 模板 + 后续意图 + 安全守则）：[`skill/mcd-morning-brief/SKILL.md`](./skill/mcd-morning-brief/SKILL.md)
 - 工具清单与调用时序：[`MCP_INTEGRATION.md`](./MCP_INTEGRATION.md)
 
 ## ✅ 测试
