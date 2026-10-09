@@ -1,0 +1,24 @@
+# Secrets — never commit your MCP token
+.env
+.env.*
+*.token
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+build/
+dist/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Generated (repo root only; examples/ is versioned)
+/*.ics
+/brief-*.md

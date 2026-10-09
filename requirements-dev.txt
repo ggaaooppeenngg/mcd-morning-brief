@@ -1,0 +1,2 @@
+-r requirements.txt
+pytest>=8.0          # 运行 tests/ 目录下的单元测试
